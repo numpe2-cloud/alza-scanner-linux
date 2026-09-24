@@ -1,4 +1,4 @@
-name: alza-scaner workflow
+name: alza-scanner workflow
 
 on:
   push:
@@ -9,26 +9,26 @@ jobs:
   testy:
     runs-on: ubuntu-latest
     steps:
-      - name: Stahni kod
-        uses: actions/checkout@v3
+    - name: Stahni kod
+      uses: actions/checkout@v3
 
-      - name: Nastav Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.14.4"
+    - name: Nastav Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.14.4"
 
-      - name: Instaluj zavislosti
-        run: pip install -r requirements.txt
+    - name: Instaluj zavislosti
+      run: pip install -r requirements.txt
 
-      - name: Spust testy
-        run: pytest
+    - name: Spust testy
+      run: pytest
 
-      - name: Spust kontrolu kodu
-        run: flake8 src/
+    - name: Spust kontrolu kodu
+      run: flake8 src/
 
-      - name: Kontrola
-        run: echo "Něco se pokazilo"
-        if: failure()
+    - name: Kontrola
+      run: echo "Něco se pokazilo"
+      if: failure()
 
   build:
     runs-on: ubuntu-latest
