@@ -70,12 +70,15 @@ alza-scanner-linux/
 │   └── report_html.py      # sestaví HTML stránku dashboardu
 ├── test/
 │   ├── test_posouzeni_ceny.py
-│   └── test_najdi_minimum.py
+│   ├── test_najdi_minimum.py
+│   ├── test_alerty.py
+│   └── test_uloz_cenu.py
 ├── .github/workflows/
 │   └── testy.yml           # CI/CD: testy + flake8 + sestavení Docker image
 ├── Dockerfile              # image s Pythonem, Playwrightem a Xvfb
-├── docker-compose.yaml     # spuštění kontejneru s .env a složkou data/
-├── requirements.txt        # Python knihovny
+├── docker-compose.yaml     # spuštění kontejneru s .env a složkami data/ a config/
+├── requirements.txt        # Python knihovny pro běh
+├── requirements-dev.txt    # navíc pytest a flake8 pro vývoj a testy
 ├── conftest.py             # prázdný, aby pytest našel moduly v src/
 ├── .flake8                 # pravidla kontroly stylu
 ├── .gitignore
@@ -104,7 +107,7 @@ alza-scanner-linux/
    ```
    docker compose up --build
    ```
-   Výchozí příkaz kontejneru je `kontrola_ceny.py`. Přepínač `--build` znovu sestaví image - je potřeba po každé změně kódu nebo `polozky.yaml`, protože se soubory kopírují do image při sestavení.
+   Výchozí příkaz kontejneru je `kontrola_ceny.py`. Přepínač `--build` znovu sestaví image - je potřeba po každé změně kódu, protože se soubory kopírují do image při sestavení. Složka `config/` (s `polozky.yaml`) je připojená z hostitele jako volume, takže po změně seznamu produktů stačí kontejner jen znovu spustit.
 
 5. Uložení aktuálních cen do historie (jiný příkaz než výchozí):
    ```
@@ -112,7 +115,7 @@ alza-scanner-linux/
    ```
    Virtuální displej se musí spustit i tady, protože vlastní příkaz nahradí celý výchozí `CMD` z `Dockerfile`.
 
-Historie cen se ukládá do složky `data/` na hostiteli (volume `./data:/app/data`), takže zůstane zachovaná i po smazání kontejneru.
+Historie cen se ukládá do složky `data/` na hostiteli (volume `./data:/app/data`), takže zůstane zachovaná i po smazání kontejneru. Kontejner má nastavenou časovou zónu `Europe/Prague`, aby časy v logu a data v CSV odpovídaly místnímu času.
 
 Kontejner provede jednu kontrolu a skončí. Pro pravidelné spouštění lze příkazy výše naplánovat přes cron na hostiteli.
 
@@ -163,9 +166,12 @@ V Dockeru se `.env` předává kontejneru přes `env_file` v `docker-compose.yam
 
 ## Testování
 
-Projekt má jednotkové testy (`pytest`) pro čisté funkce (`posouzeni_ceny()`, `najdi_minimum()`) a je průběžně kontrolovaný linterem `flake8`.
+Projekt má jednotkové testy (`pytest`) pro `posouzeni_ceny()`, `je_podezrela_cena()`, `najdi_minimum()`, `uloz_cenu()` a `kontrola_alertu()` a je průběžně kontrolovaný linterem `flake8`.
+
+Knihovny pro testy jsou v `requirements-dev.txt` (obsahuje i běžné závislosti):
 
 ```
+pip install -r requirements-dev.txt
 pytest
 flake8 .
 ```
@@ -174,7 +180,7 @@ flake8 .
 
 Při každém pushi do větve `master` proběhne GitHub Actions pipeline (`.github/workflows/testy.yml`):
 
-1. **testy** — nainstaluje závislosti, spustí `pytest` a `flake8 src/`
+1. **testy** — nainstaluje závislosti z `requirements-dev.txt`, spustí `pytest` a `flake8 .`
 2. **build** — sestaví Docker image; spustí se jen tehdy, když testy projdou (`needs: testy`)
 
 Image se záměrně nenahrává na Docker Hub. Docker verze slouží jako ukázka kontejnerizace, v běžném provozu projekt běží na Windows přes Task Scheduler.
